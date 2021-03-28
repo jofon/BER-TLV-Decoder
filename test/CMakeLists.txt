@@ -1,6 +1,6 @@
 set(TEST_SRC_FILES 
     main.cpp
-    TestBerTag.cpp)
+    TestBerTlv.cpp)
 
 add_executable(unittests ${TEST_SRC_FILES})
 target_link_libraries(unittests PRIVATE ber_tlv_decoder)

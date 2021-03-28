@@ -1,5 +1,5 @@
 set(SRC_FILES 
-    BerTag.cpp)
+    BerTlv.cpp)
 
 
 add_library(ber_tlv_decoder ${SRC_FILES})
