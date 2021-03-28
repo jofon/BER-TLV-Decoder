@@ -1,0 +1,16 @@
+CMakelists
+	compile tests
+	compile actual code
+	compile as executable with a main.cpp
+		but objective will be a library
+		so do something like dk Application_mode? google for alternatives
+
+Start unit tests
+	Primitive tag
+		tag name
+		length
+		value
+	Constructed Tag
+		get primitives
+	
+	unit tests errors and stuff
