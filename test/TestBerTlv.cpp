@@ -41,7 +41,32 @@ TEST_CASE("Test BerTlv decoding") {
 
 	// Do with invalid value length?
 
-	// Primitive
+	
+
+	// Universal class
+	BerTlv tlvUniversal("0533");
+	CHECK(tlvUniversal.getTagClass() == TagClass::UNIVERSAL);
+	
+	// Application class
+	BerTlv tlvApplication("4033");
+	CHECK(tlvApplication.getTagClass() == TagClass::APPLICATION);
+	
+	// Context-specific class
+	BerTlv tlvContextSpecific("8033");
+	CHECK(tlvContextSpecific.getTagClass() == TagClass::CONTEXT_SPECIFIC);
+
+	// Private class
+	BerTlv tlvPrivate("D005");
+	CHECK(tlvPrivate.getTagClass() == TagClass::PRIVATE);
+
+
+	// Primitive type
+	BerTlv tlvPrimitive("9505");
+	CHECK(tlvPrimitive.getTagType() == TagType::PRIMITIVE);
+
+	// Constructed type
+	BerTlv tlvConstructed("A505");
+	CHECK(tlvConstructed.getTagType() == TagType::CONSTRUCTED);
 
 
 }

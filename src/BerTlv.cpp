@@ -23,6 +23,16 @@ namespace ber_tlv_decoder {
 		return value;
 	}
 
+	TagClass BerTlv::getTagClass() const
+	{
+		return tagClass;
+	}
+
+	TagType BerTlv::getTagType() const
+	{
+		return tagType;
+	}
+
 	void BerTlv::decode(const std::string & tlv)
 	{
 		int currentReadIndex = 0;
@@ -45,10 +55,37 @@ namespace ber_tlv_decoder {
 
 		const int firstByte = std::stoi(tag, nullptr, 16);
 
-		int dataClass; // TODO make enum. need tests
-		int dataType; // TODO make enum. Need tests
+		const int tagClassBits = firstByte & 0xC0; // Check first 2 bits
+		if (tagClassBits == 0)
+		{
+			tagClass = TagClass::UNIVERSAL;
+		}
+		else if ((tagClassBits & 0xC0) == 0xC0)
+		{
+			tagClass = TagClass::PRIVATE;
+		}
+		else if ((tagClassBits & 0x80) == 0x80)
+		{
+			tagClass = TagClass::CONTEXT_SPECIFIC;
+		}
+		else if ((tagClassBits & 0x40) == 0x40)
+		{
+			tagClass = TagClass::APPLICATION;
+		}
 
-		const int tagNumber = firstByte & 0x1f; // Check last 5 bits
+		const int tagTypeBits = firstByte & 0x20; // Check bit 6
+		if (tagTypeBits == 0)
+		{
+			tagType = TagType::PRIMITIVE;
+		}
+		else
+		{
+			tagType = TagType::CONSTRUCTED;
+		}
+
+
+
+		const int tagNumber = firstByte & 0x1F; // Check last 5 bits
 
 		// Check if the tag is using more than one byte
 		if (tagNumber >= 31)
