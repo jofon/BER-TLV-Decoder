@@ -2,61 +2,101 @@
 
 #include <iostream>
 
-BerTlv::BerTlv(const std::string & tlv)
-{
-	decode(tlv);
-}
+namespace ber_tlv_decoder {
 
-std::string BerTlv::getTag() const
-{
-	return tag;
-}
-
-std::string BerTlv::getLength() const
-{
-	return length;
-}
-std::string BerTlv::getValue() const
-{
-	return value;
-}
-
-void BerTlv::decode(const std::string & tlv)
-{
-	int currentReadIndex = 0;
-	tag = tlv.substr(currentReadIndex, 2);
-	currentReadIndex += 2;
-
-	const int firstByte = std::stoi(tag, nullptr, 16);
-
-	int dataClass; // TODO make enum. need tests
-	int dataType; // TODO make enum. Need tests
-
-	const int tagNumber = firstByte & 0x1f; // Check last 5 bits
-	
-	// Check if the tag is using more than one byte
-	if (tagNumber >= 31)
+	BerTlv::BerTlv(const std::string & tlv)
 	{
-		for (; currentReadIndex < tlv.length();)
-		{
-			const std::string byteString = tlv.substr(currentReadIndex, 2);
-			currentReadIndex += 2;
-			tag += byteString;
+		decode(tlv);
+	}
 
-			const int byte = std::stoi(byteString, nullptr, 16);
-			const bool hasNextByte = byte & 0x80; // Check first bit
-			if (!hasNextByte)
+	std::string BerTlv::getTag() const
+	{
+		return tag;
+	}
+
+	std::string BerTlv::getLength() const
+	{
+		return length;
+	}
+	std::string BerTlv::getValue() const
+	{
+		return value;
+	}
+
+	void BerTlv::decode(const std::string & tlv)
+	{
+		int currentReadIndex = 0;
+		decodeTag(tlv, currentReadIndex);
+		decodeLength(tlv, currentReadIndex);
+		decodeValue(tlv, currentReadIndex);
+
+
+
+		std::cout << tag << "\n";
+		std::cout << length << "\n";
+		std::cout << value << "\n";
+
+	}
+
+	void BerTlv::decodeTag(const std::string & tlv, int & currentReadIndex)
+	{
+		tag = tlv.substr(currentReadIndex, 2);
+		currentReadIndex += 2;
+
+		const int firstByte = std::stoi(tag, nullptr, 16);
+
+		int dataClass; // TODO make enum. need tests
+		int dataType; // TODO make enum. Need tests
+
+		const int tagNumber = firstByte & 0x1f; // Check last 5 bits
+
+		// Check if the tag is using more than one byte
+		if (tagNumber >= 31)
+		{
+			for (; currentReadIndex < tlv.length();)
 			{
-				break;
+				const std::string byteString = tlv.substr(currentReadIndex, 2);
+				currentReadIndex += 2;
+				tag += byteString;
+
+				const int byte = std::stoi(byteString, nullptr, 16);
+				const bool hasNextByte = byte & 0x80; // Check first bit
+				if (!hasNextByte)
+				{
+					break;
+				}
 			}
 		}
 	}
 
+	void BerTlv::decodeLength(const std::string & tlv, int & currentReadIndex)
+	{
+		length = tlv.substr(currentReadIndex, 2);
+		currentReadIndex += 2;
 
+		const int firstByte = std::stoi(length, nullptr, 16);
 
-	std::cout << tag << "\n";
-	
-	length = tlv.substr(currentReadIndex, 2);
-	currentReadIndex += 2;
-	value = tlv.substr(currentReadIndex);
+		const int lengthForm = firstByte & 0x80; // Check 8th bit
+
+		// Check if the tag is using more than one byte
+		// 8th bit at 0 means the length only uses one byte
+		// 8th bit at 1 means the length uses more than one byte. The number of bytes is encoded in the other 7 bits
+		if (lengthForm != 0)
+		{
+			const int numberLengthBytes = firstByte & 0x7F;
+			for (int currentByte = 0; currentReadIndex < tlv.length() && currentByte < numberLengthBytes; ++currentByte)
+			{
+				const std::string byteString = tlv.substr(currentReadIndex, 2);
+				currentReadIndex += 2;
+				length += byteString;
+
+				// to convert to an actual value, will stoi of the entire string work?
+			}
+		}
+	}
+
+	void BerTlv::decodeValue(const std::string & tlv, int & currentReadIndex)
+	{
+		value = tlv.substr(currentReadIndex);
+	}
 }
