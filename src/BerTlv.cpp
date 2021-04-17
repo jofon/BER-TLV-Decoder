@@ -52,24 +52,21 @@ namespace ber_tlv_decoder {
 			decodeValue(tlv, currentReadIndex);
 		}
 
-		if (isValidTlv)
+		if (tagType == TagType::CONSTRUCTED && !value.empty())
 		{
-			if (tagType == TagType::CONSTRUCTED)
+			const int lengthInt = std::stoi(length.size() > 2 ? length.substr(2) : length, nullptr, 16) * 2; // times two because each element of the value is hexadecimal, so it has two characters
+			int currentReadIndexChildren = 0;
+			while (currentReadIndexChildren != lengthInt)
 			{
-				const int lengthInt = std::stoi(length.size() > 2 ? length.substr(2) : length, nullptr, 16) * 2; // times two because each element of the value is hexadecimal, so it has two characters
-				int currentReadIndexChildren = 0;
-				while (currentReadIndexChildren != lengthInt)
-				{
-					BerTlv nextTag;
-					nextTag.decode(value.substr(currentReadIndexChildren), false);
-					nextTag.isValidTlv = true;
-					childrenTlvs.push_back(nextTag);
+				BerTlv nextTag;
+				nextTag.decode(value.substr(currentReadIndexChildren), false);
+				nextTag.isValidTlv = true;
+				childrenTlvs.push_back(nextTag);
 
-					currentReadIndexChildren += nextTag.currentReadIndex;
-				}
+				currentReadIndexChildren += nextTag.currentReadIndex;
 			}
 		}
-		else if (allowConstructedIfMultipleTlvs)
+		else if (!isValidTlv && allowConstructedIfMultipleTlvs)
 		{
 			if (currentReadIndex != tlv.size() && currentReadIndex != tlv.size() + 2)
 			{

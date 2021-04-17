@@ -153,5 +153,36 @@ TEST_CASE("Test BerTlv decoding") {
 	CHECK(tlvConstructedMultipleTagsChildren[2].isValid() == true);
 
 	// constructed TLV with a constructed TLV inside
+	BerTlv tlvConstructedWithConstructedAndPrimitive("E010950133E0039501339F33051234567890");
+	CHECK(tlvConstructedWithConstructedAndPrimitive.getTag() == "E0");
+	CHECK(tlvConstructedWithConstructedAndPrimitive.getLength() == "10");
+	CHECK(tlvConstructedWithConstructedAndPrimitive.getValue() == "950133E0039501339F33051234567890");
+	CHECK(tlvConstructedWithConstructedAndPrimitive.getTagType() == TagType::CONSTRUCTED);
+	CHECK(tlvConstructedWithConstructedAndPrimitive.isValid() == true);
+	const auto tlvConstructedWithConstructedAndPrimitiveChildren = tlvConstructedWithConstructedAndPrimitive.getChildren();
+	CHECK(tlvConstructedWithConstructedAndPrimitiveChildren.size() == 3);
+	CHECK(tlvConstructedWithConstructedAndPrimitiveChildren[0].getTag() == "95");
+	CHECK(tlvConstructedWithConstructedAndPrimitiveChildren[0].getLength() == "01");
+	CHECK(tlvConstructedWithConstructedAndPrimitiveChildren[0].getValue() == "33");
+	CHECK(tlvConstructedWithConstructedAndPrimitiveChildren[0].getTagType() == TagType::PRIMITIVE);
+	CHECK(tlvConstructedWithConstructedAndPrimitiveChildren[0].isValid() == true);
+	CHECK(tlvConstructedWithConstructedAndPrimitiveChildren[1].getTag() == "E0");
+	CHECK(tlvConstructedWithConstructedAndPrimitiveChildren[1].getLength() == "03");
+	CHECK(tlvConstructedWithConstructedAndPrimitiveChildren[1].getValue() == "950133");
+	CHECK(tlvConstructedWithConstructedAndPrimitiveChildren[1].getTagType() == TagType::CONSTRUCTED);
+	CHECK(tlvConstructedWithConstructedAndPrimitiveChildren[1].isValid() == true);
+	CHECK(tlvConstructedWithConstructedAndPrimitiveChildren[2].getTag() == "9F33");
+	CHECK(tlvConstructedWithConstructedAndPrimitiveChildren[2].getLength() == "05");
+	CHECK(tlvConstructedWithConstructedAndPrimitiveChildren[2].getValue() == "1234567890");
+	CHECK(tlvConstructedWithConstructedAndPrimitiveChildren[2].getTagType() == TagType::PRIMITIVE);
+	CHECK(tlvConstructedWithConstructedAndPrimitiveChildren[2].isValid() == true);
+	const auto tlvConstructedinConstructedChildren = tlvConstructedWithConstructedAndPrimitiveChildren[1].getChildren();
+	CHECK(tlvConstructedinConstructedChildren.size() == 1);
+	CHECK(tlvConstructedinConstructedChildren[0].getTag() == "95");
+	CHECK(tlvConstructedinConstructedChildren[0].getLength() == "01");
+	CHECK(tlvConstructedinConstructedChildren[0].getValue() == "33");
+	CHECK(tlvConstructedinConstructedChildren[0].getTagType() == TagType::PRIMITIVE);
+	CHECK(tlvConstructedinConstructedChildren[0].isValid() == true);
+
 
 }
