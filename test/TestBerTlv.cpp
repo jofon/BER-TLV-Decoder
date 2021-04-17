@@ -184,5 +184,4 @@ TEST_CASE("Test BerTlv decoding") {
 	CHECK(tlvConstructedinConstructedChildren[0].getTagType() == TagType::PRIMITIVE);
 	CHECK(tlvConstructedinConstructedChildren[0].isValid() == true);
 
-
 }

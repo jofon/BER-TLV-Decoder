@@ -58,5 +58,7 @@ namespace ber_tlv_decoder {
 
 		void decodeValue(const std::string & tlv, int & currentReadIndex);
 
+		int convertLengthToInt() const;
+
 	};
 }

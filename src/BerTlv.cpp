@@ -54,7 +54,7 @@ namespace ber_tlv_decoder {
 
 		if (tagType == TagType::CONSTRUCTED && !value.empty())
 		{
-			const int lengthInt = std::stoi(length.size() > 2 ? length.substr(2) : length, nullptr, 16) * 2; // times two because each element of the value is hexadecimal, so it has two characters
+			const int lengthInt = convertLengthToInt();
 			int currentReadIndexChildren = 0;
 			while (currentReadIndexChildren != lengthInt)
 			{
@@ -197,7 +197,7 @@ namespace ber_tlv_decoder {
 		}
 		else
 		{
-			const int lengthInt = std::stoi(length.size() > 2 ? length.substr(2) : length, nullptr, 16) * 2; // times two because each element of the value is hexadecimal, so it has two characters
+			const int lengthInt = convertLengthToInt();
 			if (value.size() != lengthInt)
 			{
 				value = tlv.substr(currentReadIndex, lengthInt);				
@@ -205,5 +205,10 @@ namespace ber_tlv_decoder {
 			}
 			currentReadIndex += lengthInt;
 		}
+	}
+
+	int BerTlv::convertLengthToInt() const
+	{
+		return std::stoi(length.size() > 2 ? length.substr(2) : length, nullptr, 16) * 2; // times two because each element of the value is hexadecimal, so it has two characters
 	}
 }
