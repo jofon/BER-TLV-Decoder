@@ -6,7 +6,7 @@ namespace ber_tlv_decoder {
 
 	BerTlv::BerTlv(const std::string & tlv)
 	{
-		decode(tlv);
+		decode(tlv, true);
 	}
 
 	std::string BerTlv::getTag() const
@@ -33,13 +33,67 @@ namespace ber_tlv_decoder {
 		return tagType;
 	}
 
-	void BerTlv::decode(const std::string & tlv)
+	bool BerTlv::isValid() const
 	{
-		int currentReadIndex = 0;
+		return isValidTlv;
+	}
+
+	std::vector<BerTlv> BerTlv::getChildren() const
+	{
+		return childrenTlvs;
+	}
+
+	void BerTlv::decode(const std::string & tlv, const bool allowConstructedIfMultipleTlvs)
+	{
 		decodeTag(tlv, currentReadIndex);
 		decodeLength(tlv, currentReadIndex);
-		decodeValue(tlv, currentReadIndex);
 
+		if (isValidTlv) {
+			decodeValue(tlv, currentReadIndex);
+		}
+
+		if (isValidTlv)
+		{
+			if (tagType == TagType::CONSTRUCTED)
+			{
+				const int lengthInt = std::stoi(length.size() > 2 ? length.substr(2) : length, nullptr, 16) * 2; // times two because each element of the value is hexadecimal, so it has two characters
+				int currentReadIndexChildren = 0;
+				while (currentReadIndexChildren != lengthInt)
+				{
+					BerTlv nextTag;
+					nextTag.decode(value.substr(currentReadIndexChildren), false);
+					nextTag.isValidTlv = true;
+					childrenTlvs.push_back(nextTag);
+
+					currentReadIndexChildren += nextTag.currentReadIndex;
+				}
+			}
+		}
+		else if (allowConstructedIfMultipleTlvs)
+		{
+			if (currentReadIndex != tlv.size() && currentReadIndex != tlv.size() + 2)
+			{
+				BerTlv nextTag;
+				nextTag.decode(tlv.substr(currentReadIndex), false);
+				if (nextTag.isValid())
+				{
+					isValidTlv = true;
+
+					// this is a group of tags, so we add them as children and consider this a constructed tag
+					childrenTlvs.push_back(*this);
+					childrenTlvs.push_back(nextTag);
+
+
+					tagType = TagType::CONSTRUCTED;
+
+					tag.clear();
+					value = tlv;
+					length.clear();
+					tagClass = TagClass::UNIVERSAL;
+				}
+
+			}
+		}
 
 
 		std::cout << tag << "\n";
@@ -84,7 +138,6 @@ namespace ber_tlv_decoder {
 		}
 
 
-
 		const int tagNumber = firstByte & 0x1F; // Check last 5 bits
 
 		// Check if the tag is using more than one byte
@@ -111,6 +164,11 @@ namespace ber_tlv_decoder {
 		length = tlv.substr(currentReadIndex, 2);
 		currentReadIndex += 2;
 
+		if (length.empty()) {
+			isValidTlv = false;
+			return;
+		}
+
 		const int firstByte = std::stoi(length, nullptr, 16);
 
 		const int lengthForm = firstByte & 0x80; // Check 8th bit
@@ -135,5 +193,20 @@ namespace ber_tlv_decoder {
 	void BerTlv::decodeValue(const std::string & tlv, int & currentReadIndex)
 	{
 		value = tlv.substr(currentReadIndex);
+
+		if (value.empty() || value.size() % 2 != 0) // a value with odd length is invalid
+		{
+			isValidTlv = false;
+		}
+		else
+		{
+			const int lengthInt = std::stoi(length.size() > 2 ? length.substr(2) : length, nullptr, 16) * 2; // times two because each element of the value is hexadecimal, so it has two characters
+			if (value.size() != lengthInt)
+			{
+				value = tlv.substr(currentReadIndex, lengthInt);				
+				isValidTlv = false;
+			}
+			currentReadIndex += lengthInt;
+		}
 	}
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 namespace ber_tlv_decoder {
 	enum class TagClass
@@ -28,16 +29,28 @@ namespace ber_tlv_decoder {
 		TagClass getTagClass() const;
 		TagType getTagType() const;
 
+		bool isValid() const;
+
+		std::vector<BerTlv> getChildren() const;
+
 	private:
+
+		int currentReadIndex = 0;
 
 		std::string tag;
 		std::string length;
 		std::string value;
 
-		TagClass tagClass;
-		TagType tagType;
+		TagClass tagClass = TagClass::UNIVERSAL;
+		TagType tagType = TagType::PRIMITIVE;
 
-		void decode(const std::string & tlv);
+		bool isValidTlv = true;
+
+		std::vector<BerTlv> childrenTlvs;
+
+		BerTlv() = default;
+
+		void decode(const std::string & tlv, const bool allowConstructedIfMultipleTlvs);
 
 		void decodeTag(const std::string & tlv, int & currentReadIndex);
 
