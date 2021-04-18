@@ -80,7 +80,6 @@ namespace ber_tlv_decoder {
 					childrenTlvs.push_back(*this);
 					childrenTlvs.push_back(nextTag);
 
-
 					tagType = TagType::CONSTRUCTED;
 
 					tag.clear();
@@ -91,12 +90,6 @@ namespace ber_tlv_decoder {
 
 			}
 		}
-
-
-		std::cout << tag << "\n";
-		std::cout << length << "\n";
-		std::cout << value << "\n";
-
 	}
 
 	void BerTlv::decodeTag(const std::string & tlv, int & currentReadIndex)
