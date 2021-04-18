@@ -45,11 +45,11 @@ namespace ber_tlv_decoder {
 
 	void BerTlv::decode(const std::string & tlv, const bool allowConstructedIfMultipleTlvs)
 	{
-		decodeTag(tlv, currentReadIndex);
-		decodeLength(tlv, currentReadIndex);
+		decodeTag(tlv);
+		decodeLength(tlv);
 
 		if (isValidTlv) {
-			decodeValue(tlv, currentReadIndex);
+			decodeValue(tlv);
 		}
 
 		if (tagType == TagType::CONSTRUCTED && !value.empty())
@@ -66,33 +66,57 @@ namespace ber_tlv_decoder {
 				currentReadIndexChildren += nextTag.currentReadIndex;
 			}
 		}
-		else if (!isValidTlv && allowConstructedIfMultipleTlvs)
-		{
-			if (currentReadIndex != tlv.size() && currentReadIndex != tlv.size() + 2)
+		else if (!isValidTlv) {
+			if (allowConstructedIfMultipleTlvs)
 			{
-				BerTlv nextTag;
-				nextTag.decode(tlv.substr(currentReadIndex), false);
-				if (nextTag.isValid())
+				if (currentReadIndex != tlv.size() && currentReadIndex != tlv.size() + 2)
 				{
-					isValidTlv = true;
+					const int lengthInt = tlv.size();
+					if (lengthInt > 0)
+					{
+						isValidTlv = true;
 
-					// this is a group of tags, so we add them as children and consider this a constructed tag
-					childrenTlvs.push_back(*this);
-					childrenTlvs.push_back(nextTag);
+						// this is a group of tags, so we add them as children and consider this a constructed tag
+						childrenTlvs.push_back(*this);
 
-					tagType = TagType::CONSTRUCTED;
+						int currentReadIndexChildren = currentReadIndex;
+						while (currentReadIndexChildren < lengthInt)
+						{
+							BerTlv nextTag;
+							nextTag.decode(tlv.substr(currentReadIndexChildren), false);
+							if (nextTag.isValidTlv)
+							{
+								childrenTlvs.push_back(nextTag);
+							}
+							currentReadIndexChildren += nextTag.currentReadIndex;
+						}
 
-					tag.clear();
-					value = tlv;
-					length.clear();
-					tagClass = TagClass::UNIVERSAL;
+						// If nothing else in the TLV was considered valid, we go back to having the first valid TLV as the only one
+						if (childrenTlvs.size() > 1)
+						{
+							tagType = TagType::CONSTRUCTED;
+
+							tag.clear();
+							value = tlv;
+							length.clear();
+							tagClass = TagClass::UNIVERSAL;
+						}
+						else
+						{
+							childrenTlvs.clear();
+							isValidTlv = false;
+						}
+					}
 				}
-
+			}
+			else if (hasMoreAfterValue)
+			{
+				isValidTlv = true; // this is part of a group of tags not inside a constructed tag, so we consider this as valid and will continue to evalute the rest of the tlv
 			}
 		}
 	}
 
-	void BerTlv::decodeTag(const std::string & tlv, int & currentReadIndex)
+	void BerTlv::decodeTag(const std::string & tlv)
 	{
 		tag = tlv.substr(currentReadIndex, 2);
 		currentReadIndex += 2;
@@ -149,7 +173,7 @@ namespace ber_tlv_decoder {
 		}
 	}
 
-	void BerTlv::decodeLength(const std::string & tlv, int & currentReadIndex)
+	void BerTlv::decodeLength(const std::string & tlv)
 	{
 		length = tlv.substr(currentReadIndex, 2);
 		currentReadIndex += 2;
@@ -174,13 +198,11 @@ namespace ber_tlv_decoder {
 				const std::string byteString = tlv.substr(currentReadIndex, 2);
 				currentReadIndex += 2;
 				length += byteString;
-
-				// to convert to an actual value, will stoi of the entire string work?
 			}
 		}
 	}
 
-	void BerTlv::decodeValue(const std::string & tlv, int & currentReadIndex)
+	void BerTlv::decodeValue(const std::string & tlv)
 	{
 		value = tlv.substr(currentReadIndex);
 
@@ -193,8 +215,9 @@ namespace ber_tlv_decoder {
 			const int lengthInt = convertLengthToInt();
 			if (value.size() != lengthInt)
 			{
-				value = tlv.substr(currentReadIndex, lengthInt);				
+				value = tlv.substr(currentReadIndex, lengthInt);
 				isValidTlv = false;
+				hasMoreAfterValue = true;
 			}
 			currentReadIndex += lengthInt;
 		}

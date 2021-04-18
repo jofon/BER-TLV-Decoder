@@ -45,6 +45,7 @@ namespace ber_tlv_decoder {
 		TagType tagType = TagType::PRIMITIVE;
 
 		bool isValidTlv = true;
+		bool hasMoreAfterValue = false;
 
 		std::vector<BerTlv> childrenTlvs;
 
@@ -52,11 +53,11 @@ namespace ber_tlv_decoder {
 
 		void decode(const std::string & tlv, const bool allowConstructedIfMultipleTlvs);
 
-		void decodeTag(const std::string & tlv, int & currentReadIndex);
+		void decodeTag(const std::string & tlv);
 
-		void decodeLength(const std::string & tlv, int & currentReadIndex);
+		void decodeLength(const std::string & tlv);
 
-		void decodeValue(const std::string & tlv, int & currentReadIndex);
+		void decodeValue(const std::string & tlv);
 
 		int convertLengthToInt() const;
 

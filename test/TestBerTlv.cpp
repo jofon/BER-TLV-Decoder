@@ -112,6 +112,32 @@ TEST_CASE("Test BerTlv decoding") {
 	CHECK(tlvTwoTagsChildren[1].getTagType() == TagType::PRIMITIVE);
 	CHECK(tlvTwoTagsChildren[1].isValid() == true);
 
+	// TLV of three tags. Should be considered as one constructed tag with the tags inside it
+	BerTlv tlvThreeTags("9F3301EF95013396026699");
+	CHECK(tlvThreeTags.getTag().empty());
+	CHECK(tlvThreeTags.getLength().empty());
+	CHECK(tlvThreeTags.getValue() == "9F3301EF95013396026699");
+	CHECK(tlvThreeTags.getTagType() == TagType::CONSTRUCTED);
+	CHECK(tlvThreeTags.isValid() == true);
+	const auto tlvThreeTagsChildren = tlvThreeTags.getChildren();
+	CHECK(tlvThreeTagsChildren.size() == 3);
+	CHECK(tlvThreeTagsChildren[0].getTag() == "9F33");
+	CHECK(tlvThreeTagsChildren[0].getLength() == "01");
+	CHECK(tlvThreeTagsChildren[0].getValue() == "EF");
+	CHECK(tlvThreeTagsChildren[0].getTagType() == TagType::PRIMITIVE);
+	CHECK(tlvThreeTagsChildren[0].isValid() == true);
+	CHECK(tlvThreeTagsChildren[1].getTag() == "95");
+	CHECK(tlvThreeTagsChildren[1].getLength() == "01");
+	CHECK(tlvThreeTagsChildren[1].getValue() == "33");
+	CHECK(tlvThreeTagsChildren[1].getTagType() == TagType::PRIMITIVE);
+	CHECK(tlvThreeTagsChildren[1].isValid() == true);
+	CHECK(tlvThreeTagsChildren[2].getTag() == "96");
+	CHECK(tlvThreeTagsChildren[2].getLength() == "02");
+	CHECK(tlvThreeTagsChildren[2].getValue() == "6699");
+	CHECK(tlvThreeTagsChildren[2].getTagType() == TagType::PRIMITIVE);
+	CHECK(tlvThreeTagsChildren[2].isValid() == true);
+
+
 	// constructed TLV with 1 tag inside
 	BerTlv tlvConstructedOneTag("E003950133");
 	CHECK(tlvConstructedOneTag.getTag() == "E0");
